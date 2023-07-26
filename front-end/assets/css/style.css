@@ -3,6 +3,8 @@
 :root {
     --primary-color: #00DCCD;
     --secondary-color: #004056;
+    --complementary-color: #d3d3d3;
+    --table-color-1: #f5f5f5;
     --transition-speed: 200ms;
 }
 
@@ -14,7 +16,7 @@
 }
 
 body {
-    background: url("../img/double-bubble-outline.webp") repeat;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
 }
 
 .wrapper {
@@ -25,6 +27,9 @@ body {
 }
 
 .card {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
     padding: 2rem;
     border-radius: .5rem;
     box-shadow: 0 0 1em rgba(0, 0, 0, 0.1);
@@ -42,7 +47,7 @@ label {
     -webkit-appearance: none;
     width: 100%;
     border-radius: 1rem;
-    background: #d3d3d3;
+    background: var(--complementary-color);
     outline: none;
     -webkit-transition: .2s;
     transition: opacity .2s;
@@ -85,13 +90,36 @@ label {
 }
 
 .divider {
-    border-bottom: 1px solid #d3d3d3;
-    margin: 1rem 0;
+    border-bottom: 1px solid var(--complementary-color);
+}
+
+.loan-sheet table {
+    width: 100%;
+    margin-top: 1rem;
+    border-collapse: collapse;
+}
+
+.loan-sheet table thead {
+    background: var(--complementary-color);
+}
+
+.loan-sheet table th,
+.loan-sheet table td {
+    padding: .5rem;
+    text-align: left;
+}
+
+.loan-sheet tr:nth-child(even) {
+    background: var(--table-color-1);
 }
 
 @media (max-width: 767px) {
     .loan-details ul {
         flex-direction: column;
         gap: 1rem;
+    }
+
+    .loan-sheet table {
+        font-size: .75rem;
     }
 }
