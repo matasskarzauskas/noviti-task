@@ -2,19 +2,44 @@
 <html lang="en">
 
 <head>
+    <link rel="stylesheet" href="assets/css/style.css">
     <meta name="description" content="Webpage description goes here" />
     <meta charset="utf-8">
     <title>Change_me</title>
 </head>
 
 <body>
+    <div class="wrapper">
+        <div class="card">
+            <div class="loan-details">
+                <ul>
+                    <li>
+                        <h2>6</h2> months
+                    </li>
+                    <li>
+                        <h2>12.7%</h2> yearly interest
+                    </li>
+                    <li>
+                        <h2>Annuity</h2> Schedule repayment type
+                    </li>
+                </ul>
+            </div>
 
-<div class="container">
+            <div class="divider"></div>
 
-</div>
-
-<script>
-</script>
-
+            <div class="options">
+                <label for="sum_range">
+                    <h2 class="loan-amount"></h2>
+                    <input type="range" min="5000" max="50000" value="50" step="1000" class="slider" id="sum_range">
+                    <small>Loan amount</small>
+                </label>
+            </div>
+        </div>
+    </div>
 </body>
+
+<script src="assets/js/helpers.js"></script>
+<script src="assets/js/main.js"></script>
+
+
 </html>
