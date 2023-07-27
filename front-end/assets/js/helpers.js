@@ -1,3 +1,5 @@
+const API_URL = 'http://127.0.0.1:8080/api/';
+
 window.RangeSlider = class RangeSlider {
     constructor(slider, valueOutputEl, usedRangeColor, backgroundColor, minimumFractionDigits = 0, locale = 'lt-LT', currency = 'EUR') {
         this.slider = slider;
@@ -32,10 +34,13 @@ window.RangeSlider = class RangeSlider {
         return this.slider.value
     }
 
-    onChange(callback) {
-        this.slider.addEventListener('input', (e) => {
-            callback(e.target.value)
-        });
+    onChange = (callback, event) => {
+        this.slider.addEventListener(event, callback);
+    }
+
+    deleteListener = (callback) => {
+        this.slider.removeEventListener('input', callback);
+        this.slider.removeEventListener('change', callback);
     }
 }
 
@@ -53,7 +58,6 @@ window.LoanCalculator = class LoanCalculator {
     }
 
     calculate = () => {
-        this.loanTable.innerHTML = '';
         this.loanAmount = Number(this.loanRangeSlider.getValue());
 
         let monthlyInterestRate = this.interestRate / 100 / 12;
@@ -102,6 +106,92 @@ window.LoanCalculator = class LoanCalculator {
         this.loanTable.innerHTML = tableGenerator.getTable();
 
         return tableData
+    }
+}
+
+window.ApiLoanCalculator = class ApiLoanCalculator {
+    constructor(loanRangeSlider, loanTerm, interestRate, loanTable) {
+        this.loanRangeSlider = loanRangeSlider;
+        this.loanTerm = loanTerm;
+        this.interestRate = interestRate;
+        this.loanTable = loanTable;
+        this.timeout = null;
+        this.controller = null;
+    }
+
+    calculate = () => {
+        clearTimeout(this.timeout);
+
+        if (this.controller) {
+            this.controller.abort();
+        }
+
+        this.controller = new AbortController();
+
+        this.timeout = setTimeout(() => {
+            this.callApi();
+        }, 100);
+    }
+
+    callApi = () => {
+        this.loanAmount = Number(this.loanRangeSlider.getValue()).toFixed(2);
+        this.loanTable.classList.add('loading');
+
+        fetch(API_URL + 'loan/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                amount: this.loanAmount,
+                duration: this.loanTerm,
+                interestRate: this.interestRate
+            }),
+            signal: this.controller.signal
+        }).then(response => {
+            return response.json();
+        }).then(data => {
+            let loanData = data.message
+
+            if (loanData.length === 0) {
+                this.loanTable.innerHTML = 'No data'
+            }
+
+            this.processData(loanData);
+            this.loanTable.classList.remove('loading');
+        }).catch(error => {
+            console.log(error);
+            this.loanTable.classList.remove('loading');
+        });
+    }
+
+    processData = (loanData) => {
+        const tableGenerator = new TableGenerator(this.loanTable, [
+            'No.',
+            'Remaining credit amount',
+            'Principal part',
+            'Interest',
+            'Total payment'
+        ])
+
+        let monthlyEntries = Object.values(loanData.monthlyEntries)
+
+        for (let i = 0; i < monthlyEntries.length; i++) {
+            tableGenerator.addRow(Object.values(monthlyEntries[i]))
+        }
+
+        let totals = Object.values(loanData.totals)
+        totals.unshift('Iš viso:')
+        totals.unshift('')
+
+        for (let i = 0; i < totals.length; i++) {
+            if (typeof totals[i] === 'number')
+                totals[i] = Number(totals[i]).toFixed(2) + ' €'
+        }
+
+        tableGenerator.addRow(totals)
+
+        this.loanTable.innerHTML = tableGenerator.getTable();
     }
 }
 
