@@ -49,8 +49,8 @@ label {
     border-radius: 1rem;
     background: var(--complementary-color);
     outline: none;
-    -webkit-transition: .2s;
-    transition: opacity .2s;
+    -webkit-transition: var(--transition-speed);
+    transition: opacity var(--transition-speed);
     height: .5rem;
     margin-top: .5rem;
 }
@@ -91,6 +91,23 @@ label {
 
 .divider {
     border-bottom: 1px solid var(--complementary-color);
+    margin: 1rem 0;
+}
+
+.loan-sheet {
+    position: relative;
+}
+
+.loan-sheet.loading:after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 110%;
+    height: 100%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.8) url("../img/loader.svg") no-repeat center center;
+    background-size: 8rem;
 }
 
 .loan-sheet table {
@@ -112,6 +129,86 @@ label {
 .loan-sheet tr:nth-child(even) {
     background: var(--table-color-1);
 }
+
+.calculator-label {
+    display: flex;
+    flex-direction: row;
+}
+
+.selection {
+    display: flex;
+    gap: 1rem;
+    margin-top: .85rem;
+}
+
+.calculator-selection input {
+    display: none;
+}
+
+.calculator-selection label {
+    border-radius: .25rem;
+    cursor: pointer;
+    transition: background-color var(--transition-speed);
+    border: 1px solid var(--secondary-color);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: relative;
+    padding: .5rem 1rem .5rem 3rem;
+}
+
+.calculator-selection label:hover {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+
+.calculator-selection label:hover:before {
+    border-color: #fff;
+}
+
+.calculator-selection input:checked + label {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+
+.calculator-selection input:checked + label:before {
+    border-color: #fff;
+}
+
+.calculator-selection input:checked + label:after {
+    background-color: #fff;
+}
+
+.calculator-selection label:before {
+    position: absolute;
+    left: 1rem;
+    content: '';
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    margin-right: .5rem;
+    border-radius: 50%;
+    border: 1px solid var(--secondary-color);
+    transition: var(--transition-speed);
+}
+
+.calculator-selection label:after {
+    position: absolute;
+    left: 1.25rem;
+    content: '';
+    display: inline-block;
+    width: .5rem;
+    height: .5rem;
+    margin-right: .5rem;
+    border-radius: 50%;
+    border: 1px solid transparent;
+    transition: var(--transition-speed);
+}
+
+.calculator-selection input:checked + label {
+    border-color: var(--secondary-color);
+}
+
 
 @media (max-width: 767px) {
     .loan-details ul {
