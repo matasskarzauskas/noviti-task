@@ -209,6 +209,23 @@ label {
     border-color: var(--secondary-color);
 }
 
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .5rem 1rem;
+    border-radius: .25rem;
+    border: 1px solid var(--secondary-color);
+    background: #fff;
+    cursor: pointer;
+    transition: background var(--transition-speed);
+}
+
+.btn:hover {
+    background: var(--secondary-color);
+    color: #fff;
+}
 
 @media (max-width: 767px) {
     .loan-details ul {
