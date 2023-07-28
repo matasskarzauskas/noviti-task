@@ -53,8 +53,8 @@ window.LoanCalculator = class LoanCalculator {
         this.exportData = null
         this.priceFormatter = new Intl.NumberFormat(locale, {
             style: 'currency',
-            currency,
-            minimumFractionDigits
+            currency: 'EUR',
+            minimumFractionDigits,
         });
         this.init();
     }
@@ -64,6 +64,7 @@ window.LoanCalculator = class LoanCalculator {
     }
 
     calculate = () => {
+        this.exportData = [];
         this.loanAmount = Number(this.loanRangeSlider.getValue());
 
         let monthlyInterestRate = this.interestRate / 100 / 12;
@@ -76,15 +77,17 @@ window.LoanCalculator = class LoanCalculator {
         let totalPayment = monthlyPayment * numberOfPayments;
         let totalPrincipal = this.loanAmount;
         let balance = this.loanAmount;
-        this.exportData = [];
 
-        const tableGenerator = new TableGenerator(this.loanTable, [
+        let headers = [
             'No.',
             'Remaining credit amount',
             'Principal part',
             'Interest',
             'Total payment'
-        ])
+        ];
+
+        const tableGenerator = new TableGenerator(this.loanTable, headers)
+        this.exportData.push(headers);
 
         for (let i = 0; i < numberOfPayments; i++) {
             let interest = balance * monthlyInterestRate;
@@ -175,16 +178,20 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
     }
 
     processData = (loanData) => {
-        const tableGenerator = new TableGenerator(this.loanTable, [
+        this.exportData = [];
+        let headers = [
             'No.',
             'Remaining credit amount',
             'Principal part',
             'Interest',
             'Total payment'
-        ])
+        ];
+        const tableGenerator = new TableGenerator(this.loanTable, headers)
+
+        this.exportData.push(headers);
 
         let monthlyEntries = Object.values(loanData.monthlyEntries)
-        this.exportData = [];
+
 
         for (let i = 0; i < monthlyEntries.length; i++) {
             tableGenerator.addRow(Object.values(monthlyEntries[i]))
@@ -205,6 +212,38 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
         this.loanTable.innerHTML = tableGenerator.getTable();
     }
 }
+
+window.Exporter = class Exporter {
+    constructor(data, filename) {
+        this.data = data;
+        this.filename = filename;
+    }
+
+    export() {
+        fetch(API_URL + 'loan/export', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                rows: this.data,
+                filename: this.filename
+            })
+        }).then(response => {
+            return response.blob();
+        }).then(response => {
+            const url = window.URL.createObjectURL(new Blob([response]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', this.filename);
+            document.body.appendChild(link);
+            link.click();
+        }).catch(error => {
+            console.log(error)
+        });
+    }
+}
+
 
 window.TableGenerator = class TableGenerator {
     constructor(table, headers, ) {

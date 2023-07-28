@@ -33,5 +33,6 @@ window.onload = function () {
 }
 
 const saveToFile = () => {
-
+    let exporter = new Exporter(window.loanCalculator.exportData, 'loan-sheet.csv')
+    exporter.export()
 }
