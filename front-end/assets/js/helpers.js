@@ -1,7 +1,7 @@
 const API_URL = 'http://127.0.0.1:8080/api/';
 
 window.RangeSlider = class RangeSlider {
-    constructor(slider, valueOutputEl, usedRangeColor, backgroundColor, minimumFractionDigits = 0, locale = 'lt-LT', currency = 'EUR') {
+    constructor(slider, valueOutputEl, usedRangeColor, backgroundColor, locale, currency, minimumFractionDigits = 0) {
         this.slider = slider;
         this.usedRangeColor = usedRangeColor;
         this.backgroundColor = backgroundColor;
@@ -45,11 +45,17 @@ window.RangeSlider = class RangeSlider {
 }
 
 window.LoanCalculator = class LoanCalculator {
-    constructor(loanRangeSlider, loanTerm, interestRate, loanTable) {
+    constructor(loanRangeSlider, loanTerm, interestRate, loanTable, locale, currency, minimumFractionDigits) {
         this.loanRangeSlider = loanRangeSlider;
         this.loanTerm = loanTerm;
         this.interestRate = interestRate;
         this.loanTable = loanTable;
+        this.exportData = null
+        this.priceFormatter = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency,
+            minimumFractionDigits
+        });
         this.init();
     }
 
@@ -70,7 +76,7 @@ window.LoanCalculator = class LoanCalculator {
         let totalPayment = monthlyPayment * numberOfPayments;
         let totalPrincipal = this.loanAmount;
         let balance = this.loanAmount;
-        let tableData = [];
+        this.exportData = [];
 
         const tableGenerator = new TableGenerator(this.loanTable, [
             'No.',
@@ -86,7 +92,6 @@ window.LoanCalculator = class LoanCalculator {
 
             if (i === this.loanTerm - 1) {
                 let roundingError = balance - principal;
-                roundingError = Number(roundingError.toFixed(2));
                 principal += roundingError;
                 monthlyPayment += roundingError;
                 totalInterest += roundingError;
@@ -98,25 +103,30 @@ window.LoanCalculator = class LoanCalculator {
             }
 
             tableGenerator.addRow([i + 1, balance.toFixed(2), principal.toFixed(2), interest.toFixed(2), monthlyPayment.toFixed(2)])
-            tableData.push([i + 1, balance.toFixed(2), principal.toFixed(2), interest.toFixed(2), monthlyPayment.toFixed(2)])
+            this.exportData.push([i + 1, balance.toFixed(2), principal.toFixed(2), interest.toFixed(2), monthlyPayment.toFixed(2)])
         }
 
-        tableGenerator.addRow(['', 'Iš viso:', totalPrincipal.toFixed(2) + ' €', totalInterest.toFixed(2) + ' €', totalPayment.toFixed(2) + ' €'])
-        tableData.push(['', 'Iš viso:', totalPrincipal.toFixed(2) + ' €', totalInterest.toFixed(2) + ' €', totalPayment.toFixed(2) + ' €'])
+        tableGenerator.addRow(['', 'Iš viso:', this.priceFormatter.format(totalPrincipal), this.priceFormatter.format(totalInterest), this.priceFormatter.format(totalPayment)])
+        this.exportData.push(['', 'Iš viso:', this.priceFormatter.format(totalPrincipal), this.priceFormatter.format(totalInterest), this.priceFormatter.format(totalPayment)])
         this.loanTable.innerHTML = tableGenerator.getTable();
-
-        return tableData
     }
 }
 
 window.ApiLoanCalculator = class ApiLoanCalculator {
-    constructor(loanRangeSlider, loanTerm, interestRate, loanTable) {
+    constructor(loanRangeSlider, loanTerm, interestRate, loanTable, locale, currency, minimumFractionDigits) {
         this.loanRangeSlider = loanRangeSlider;
         this.loanTerm = loanTerm;
         this.interestRate = interestRate;
         this.loanTable = loanTable;
         this.timeout = null;
         this.controller = null;
+        this.exportData = null
+        this.priceFormatter = new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency,
+            minimumFractionDigits
+        });
+        this.calculate()
     }
 
     calculate = () => {
@@ -160,7 +170,6 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
             this.processData(loanData);
             this.loanTable.classList.remove('loading');
         }).catch(error => {
-            console.log(error);
             this.loanTable.classList.remove('loading');
         });
     }
@@ -175,9 +184,11 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
         ])
 
         let monthlyEntries = Object.values(loanData.monthlyEntries)
+        this.exportData = [];
 
         for (let i = 0; i < monthlyEntries.length; i++) {
             tableGenerator.addRow(Object.values(monthlyEntries[i]))
+            this.exportData.push(Object.values(monthlyEntries[i]))
         }
 
         let totals = Object.values(loanData.totals)
@@ -186,11 +197,11 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
 
         for (let i = 0; i < totals.length; i++) {
             if (typeof totals[i] === 'number')
-                totals[i] = Number(totals[i]).toFixed(2) + ' €'
+                totals[i] = this.priceFormatter.format(totals[i])
         }
 
         tableGenerator.addRow(totals)
-
+        this.exportData.push(totals)
         this.loanTable.innerHTML = tableGenerator.getTable();
     }
 }
