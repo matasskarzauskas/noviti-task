@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ use App\Service\LoanCalculatorService;
 class LoanController extends AbstractController
 {
     #[Route('/loan/generate', name: 'app_noviti', methods: ['POST'])]
-    public function index(Request $request): JsonResponse
+    public function generate(Request $request): JsonResponse
     {
         $parameters = json_decode($request->getContent(), true);
 
@@ -37,6 +38,44 @@ class LoanController extends AbstractController
                 'totals' => $loanCalculator->getTotals()
             ]
         ]);
+    }
+
+    #[Route('/loan/export', name: 'app_noviti', methods: ['POST'])]
+    public function export(Request $request): Response
+    {
+        $requestData = json_decode($request->getContent(), true);
+
+        if (empty($requestData['rows'])) {
+            return $this->json([
+                'message' => 'Request rows are empty',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (empty($requestData['filename'])) {
+            return $this->json([
+                'message' => 'Filename is not defined',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $csv = fopen('php://memory', 'w');
+
+        for ($i = 0; $i < count($requestData['rows']); $i++) {
+            fputcsv($csv, $requestData['rows'][$i]);
+        }
+
+        rewind($csv);
+        $csvContent = stream_get_contents($csv);
+        fclose($csv);
+
+        $response = new Response($csvContent);
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="'.$requestData['filename'].'.csv"');
+
+        // Also save file to server
+        $filesystem = new Filesystem();
+        $filesystem->dumpFile('export/user-export-'.md5(time()) . '.csv', $csvContent);
+
+        return $response;
     }
 
     private function validateRequest(array $parameters): ?JsonResponse
