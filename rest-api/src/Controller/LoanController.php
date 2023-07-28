@@ -13,7 +13,7 @@ use App\Service\LoanCalculatorService;
 #[Route('/api', name: 'api_')]
 class LoanController extends AbstractController
 {
-    #[Route('/loan/generate', name: 'app_noviti', methods: ['POST'])]
+    #[Route('/loan/generate', name: 'loan_generate', methods: ['POST'])]
     public function generate(Request $request): JsonResponse
     {
         $parameters = json_decode($request->getContent(), true);
@@ -40,7 +40,7 @@ class LoanController extends AbstractController
         ]);
     }
 
-    #[Route('/loan/export', name: 'app_noviti', methods: ['POST'])]
+    #[Route('/loan/export', name: 'loan_export', methods: ['POST'])]
     public function export(Request $request): Response
     {
         $requestData = json_decode($request->getContent(), true);
