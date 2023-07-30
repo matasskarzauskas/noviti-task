@@ -2,6 +2,10 @@
 
 namespace App\Service;
 
+use App\Entity\LoanHistory;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
+
 class LoanCalculatorService
 {
     /**
@@ -29,11 +33,22 @@ class LoanCalculatorService
      */
     private array $totals;
 
-    public function __construct(float $amount, int $duration, float $interestRate)
+    /**
+     * @var EntityManagerInterface
+     */
+    private EntityManagerInterface $entityManager;
+
+    /**
+     * @var LoggerInterface
+     */
+    private LoggerInterface $logger;
+
+    public function __construct(float $amount, int $duration, float $interestRate, EntityManagerInterface $entityManager, LoggerInterface $logger)
     {
         $this->amount = $amount;
         $this->duration = $duration;
         $this->interestRate = $interestRate;
+        $this->entityManager = $entityManager;
     }
 
     public function getMonthlyEntries(): array
@@ -52,6 +67,15 @@ class LoanCalculatorService
         $this->totals = [];
 
         $this->generateLoanData();
+
+        // Save loan request to database. If something goes wrong, log error to not disrupt user experience
+        try {
+            $this->saveLoanRequestToDatabase();
+        } catch (\Exception $e) {
+            // Log error
+            $this->logger->error($e->getMessage());
+        }
+
     }
 
     private function generateLoanData(): void
@@ -97,5 +121,22 @@ class LoanCalculatorService
             'totalInterest' => round($totalInterest,2),
             'totalPayment' => round($totalPayment, 2)
         ];
+    }
+
+    private function saveLoanRequestToDatabase(): void
+    {
+        $loanHistory = new LoanHistory();
+        $loanHistory->setAmount($this->amount);
+        $loanHistory->setProfit($this->totals['totalInterest']);
+        $loanHistory->setUserIp($this->getUserIp());
+        $loanHistory->setDate(new \DateTime());
+
+        $this->entityManager->persist($loanHistory);
+        $this->entityManager->flush();
+    }
+
+    private function getUserIp(): string
+    {
+        return $_SERVER['REMOTE_ADDR'];
     }
 }
