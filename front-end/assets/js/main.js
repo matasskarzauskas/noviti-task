@@ -33,6 +33,11 @@ window.onload = function () {
 }
 
 const saveToFile = () => {
-    let exporter = new Exporter(window.loanCalculator.exportData, 'loan-sheet.csv')
+    let exporter = new Exporter(window.loanCalculator.exportData, 'loan-sheet.csv', 'export')
+    exporter.export()
+}
+
+const getHistory = () => {
+    let exporter = new Exporter(window.loanCalculator.exportData, 'loan-history.csv', 'history', 'GET')
     exporter.export()
 }

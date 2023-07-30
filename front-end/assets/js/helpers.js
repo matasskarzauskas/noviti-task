@@ -214,13 +214,15 @@ window.ApiLoanCalculator = class ApiLoanCalculator {
 }
 
 window.Exporter = class Exporter {
-    constructor(data, filename) {
+    constructor(data, filename, endpoint, method = 'POST') {
         this.data = data;
         this.filename = filename;
+        this.endpoint = endpoint;
+        this.method = method;
     }
 
     export() {
-        fetch(API_URL + 'loan/export', {
+        fetch(API_URL + 'loan/' + this.endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
