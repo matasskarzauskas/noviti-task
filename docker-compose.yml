@@ -18,7 +18,17 @@ services:
         volumes:
             - ./front-end:/usr/share/nginx/html
 
-
+    noviti-db:
+        image: postgres
+        restart: always
+        environment:
+            POSTGRES_PASSWORD: root
+            POSTGRES_USER: root
+            POSTGRES_DB: noviti
+        ports:
+            - '5432:5432'
+        volumes:
+            - ./database:/var/lib/postgresql/data
 
 networks:
     default:
@@ -27,3 +37,7 @@ networks:
             driver: default
             config:
                 - subnet: 172.33.88.0/24
+
+volumes:
+    noviti-db:
+        driver: local
