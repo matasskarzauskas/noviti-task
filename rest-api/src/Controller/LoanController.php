@@ -2,6 +2,9 @@
 
 namespace App\Controller;
 
+use App\Entity\LoanHistory;
+use Doctrine\ORM\EntityManagerInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -14,7 +17,7 @@ use App\Service\LoanCalculatorService;
 class LoanController extends AbstractController
 {
     #[Route('/loan/generate', name: 'loan_generate', methods: ['POST'])]
-    public function generate(Request $request): JsonResponse
+    public function generate(Request $request, EntityManagerInterface $entityManager, LoggerInterface $logger): JsonResponse
     {
         $parameters = json_decode($request->getContent(), true);
 
@@ -25,7 +28,9 @@ class LoanController extends AbstractController
         $loanCalculator = new LoanCalculatorService(
             $parameters['amount'],
             $parameters['duration'],
-            $parameters['interestRate']
+            $parameters['interestRate'],
+            $entityManager,
+            $logger
         );
         $loanCalculator->calculate();
 
@@ -74,6 +79,42 @@ class LoanController extends AbstractController
         // Also save file to server
         $filesystem = new Filesystem();
         $filesystem->dumpFile('export/user-export-'.md5(time()) . '.csv', $csvContent);
+
+        return $response;
+    }
+
+    #[Route('/loan/history', name: 'loan_history', methods: ['POST'])]
+    public function history(EntityManagerInterface $entityManager): Response
+    {
+        $repository = $entityManager->getRepository(LoanHistory::class);
+        $history = $repository->findAll();
+
+        if (empty($history)) {
+            return $this->json([
+                'message' => 'No history found',
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $csv = fopen('php://memory', 'w');
+        fputcsv($csv, ['No', 'Amount', 'Profit', 'User IP', 'Date']);
+
+        for ($i = 0; $i < count($history); $i++) {
+            fputcsv($csv, [
+                $i + 1,
+                $history[$i]->getAmount(),
+                $history[$i]->getProfit(),
+                $history[$i]->getUserIp(),
+                $history[$i]->getDate()->format('Y-m-d H:i:s')
+            ]);
+        }
+
+        rewind($csv);
+        $csvContent = stream_get_contents($csv);
+        fclose($csv);
+
+        $response = new Response($csvContent);
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="history.csv"');
 
         return $response;
     }
