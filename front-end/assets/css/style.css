@@ -136,9 +136,17 @@ label {
 }
 
 .selection {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 1fr;
     gap: 1rem;
     margin-top: .85rem;
+}
+
+.calculator-selection {
+    display: flex;
+    height: 100%;
+    width: 100%;
 }
 
 .calculator-selection input {
@@ -155,6 +163,7 @@ label {
     align-items: center;
     position: relative;
     padding: .5rem 1rem .5rem 3rem;
+    width: 100%;
 }
 
 .calculator-selection label:hover {
@@ -235,5 +244,9 @@ label {
 
     .loan-sheet table {
         font-size: .75rem;
+    }
+
+    .selection {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
