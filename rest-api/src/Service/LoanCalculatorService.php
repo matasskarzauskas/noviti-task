@@ -49,6 +49,7 @@ class LoanCalculatorService
         $this->duration = $duration;
         $this->interestRate = $interestRate;
         $this->entityManager = $entityManager;
+        $this->logger = $logger;
     }
 
     public function getMonthlyEntries(): array
